@@ -100,7 +100,6 @@ async function compute() {
     }
   }
 
-
   // clear objects from scene
   scene.traverse((child) => {
     if (!child.isLight) {
@@ -110,21 +109,21 @@ async function compute() {
 
   const buffer = new Uint8Array(doc.toByteArray()).buffer;
   loader.parse(buffer, function (object) {
-
+    
     // go through all objects, check for userstrings and assing colors
-
     object.traverse((child) => {
-      if (child.isLine) {
+      console.log(child)
+      if (child.isMesh) {
 
         if (child.userData.attributes.geometry.userStringCount > 0) {
           
           //get color from userStrings
-          const colorData = child.userData.attributes.userStrings[0]
-          const col = colorData[1];
+          const AreaData = child.userData.attributes.userStrings[0]
+          const Area = AreaData[1];
 
           //convert color from userstring to THREE color and assign it
           const threeColor = new THREE.Color("rgb(" + col + ")");
-          const mat = new THREE.LineBasicMaterial({ color: threeColor });
+          const mat = new THREE.MeshBasicMaterial({ color: threeColor });
           child.material = mat;
         }
       }
