@@ -12,13 +12,13 @@ const height_slider = document.getElementById("height");
 height_slider.addEventListener("mouseup", onSliderChange, false);
 height_slider.addEventListener("touchend", onSliderChange, false);
 
-const part_slider = document.getElementById("part");
-part_slider.addEventListener("mouseup", onSliderChange, false);
-part_slider.addEventListener("touchend", onSliderChange, false);
-
 const bend_slider = document.getElementById("bend");
 bend_slider.addEventListener("mouseup", onSliderChange, false);
 bend_slider.addEventListener("touchend", onSliderChange, false);
+
+const part_slider = document.getElementById("part");
+part_slider.addEventListener("mouseup", onSliderChange, false);
+part_slider.addEventListener("touchend", onSliderChange, false);
 
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/");
@@ -46,11 +46,11 @@ async function compute() {
   const param1 = new RhinoCompute.Grasshopper.DataTree("Height");
   param1.append([0], [height_slider.valueAsNumber]);
 
-  const param2 = new RhinoCompute.Grasshopper.DataTree("Parts");
-  param2.append([0], [part_slider.valueAsNumber]);
-
-  const param3 = new RhinoCompute.Grasshopper.DataTree("Bend");
+  const param2 = new RhinoCompute.Grasshopper.DataTree("Bend");
   param2.append([0], [bend_slider.valueAsNumber]);
+
+  const param3 = new RhinoCompute.Grasshopper.DataTree("Parts");
+  param3.append([0], [part_slider.valueAsNumber]);
 
   // clear values
   const trees = [];
