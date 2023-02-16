@@ -84,7 +84,7 @@ async function compute() {
 
 
 
-  // go through the objects in the Rhino document
+  // go through the objects in the Rhino document 
 
   let objects = doc.objects();
   for ( let i = 0; i < objects.count; i++ ) {
@@ -95,7 +95,12 @@ async function compute() {
      // asign geometry userstrings to object attributes
     if ( rhinoObject.geometry().userStringCount > 0 ) {
       const g_userStrings = rhinoObject.geometry().getUserStrings()
-      rhinoObject.attributes().setUserString(g_userStrings[0][0], g_userStrings[0][1])
+
+      //iterate through userData and store all userdata to geometry
+      for ( let j = 0; j < g_userStrings.length; j++ ) {
+        rhinoObject.attributes().setUserString(g_userStrings[j][0], g_userStrings[j][1])
+      }
+
       
     }
   }
@@ -112,19 +117,20 @@ async function compute() {
     
     // go through all objects, check for userstrings and assing colors
     object.traverse((child) => {
-      console.log(child)
       if (child.isMesh) {
 
         if (child.userData.attributes.geometry.userStringCount > 0) {
+        console.log(child)
           
           //get color from userStrings
           const AreaData = child.userData.attributes.userStrings[0]
           const Area = AreaData[1];
+          console.log(Area)
 
-          //convert color from userstring to THREE color and assign it
-          const threeColor = new THREE.Color("rgb(" + col + ")");
-          const mat = new THREE.MeshBasicMaterial({ color: threeColor });
-          child.material = mat;
+          // //convert color from userstring to THREE color and assign it
+          // const threeColor = new THREE.Color("rgb(" + col + ")");
+          // const mat = new THREE.MeshBasicMaterial({ color: threeColor });
+          // child.material = mat;
         }
       }
     });

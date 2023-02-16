@@ -5,16 +5,23 @@ import { Rhino3dmLoader } from 'three/addons/loaders/3DMLoader.js'
 import rhino3dm from 'rhino3dm'
 import { RhinoCompute } from 'rhinocompute'
 
-const definitionName = "rnd_node_color.gh";
+
+alert("this example has a bug and is still WIP!");
+
+const definitionName = 'shell_2.gh';
 
 // Set up sliders
-const radius_slider = document.getElementById("radius");
-radius_slider.addEventListener("mouseup", onSliderChange, false);
-radius_slider.addEventListener("touchend", onSliderChange, false);
+const height_slider = document.getElementById("height");
+height_slider.addEventListener("mouseup", onSliderChange, false);
+height_slider.addEventListener("touchend", onSliderChange, false);
 
-const count_slider = document.getElementById("count");
-count_slider.addEventListener("mouseup", onSliderChange, false);
-count_slider.addEventListener("touchend", onSliderChange, false);
+const bend_slider = document.getElementById("bend");
+bend_slider.addEventListener("mouseup", onSliderChange, false);
+bend_slider.addEventListener("touchend", onSliderChange, false);
+
+const part_slider = document.getElementById("part");
+part_slider.addEventListener("mouseup", onSliderChange, false);
+part_slider.addEventListener("touchend", onSliderChange, false);
 
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath("https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/");
@@ -39,34 +46,55 @@ rhino3dm().then(async (m) => {
 });
 
 async function compute() {
-  const param1 = new RhinoCompute.Grasshopper.DataTree("Radius");
-  param1.append([0], [radius_slider.valueAsNumber]);
+  const param1 = new RhinoCompute.Grasshopper.DataTree("Height");
+  param1.append([0], [height_slider.valueAsNumber]);
 
-  const param2 = new RhinoCompute.Grasshopper.DataTree("Count");
-  param2.append([0], [count_slider.valueAsNumber]);
+  const param2 = new RhinoCompute.Grasshopper.DataTree("Bend");
+  param2.append([0], [bend_slider.valueAsNumber]);
+
+  const param3 = new RhinoCompute.Grasshopper.DataTree("Parts");
+  param3.append([0], [part_slider.valueAsNumber]);
 
   // clear values
   const trees = [];
   trees.push(param1);
   trees.push(param2);
+  trees.push(param3);
 
   const res = await RhinoCompute.Grasshopper.evaluateDefinition(
     definition,
     trees
   );
 
-
-  //console.log(res);
+console.log(res)
 
   doc = new rhino.File3dm();
 
   // hide spinner
   document.getElementById("loader").style.display = "none";
 
+  let areas 
+
+
   //decode grasshopper objects and put them into a rhino document
   for (let i = 0; i < res.values.length; i++) {
+    
+    if (res.values[i].ParamName == "Area") 
+
     for (const [key, value] of Object.entries(res.values[i].InnerTree)) {
+
       for (const d of value) {
+        console.log(d)
+
+      }
+    }
+
+
+    for (const [key, value] of Object.entries(res.values[i].InnerTree)) {
+
+      for (const d of value) {
+        // if (d.type== "System.String") console.log(d.data) //bypass string , do not decode!
+
         const data = JSON.parse(d.data);
         const rhinoObject = rhino.CommonObject.decode(data);
         doc.objects().add(rhinoObject, null);
@@ -76,7 +104,7 @@ async function compute() {
 
 
 
-  // go through the objects in the Rhino document
+  // go through the objects in the Rhino document 
 
   let objects = doc.objects();
   for ( let i = 0; i < objects.count; i++ ) {
@@ -87,11 +115,15 @@ async function compute() {
      // asign geometry userstrings to object attributes
     if ( rhinoObject.geometry().userStringCount > 0 ) {
       const g_userStrings = rhinoObject.geometry().getUserStrings()
-      rhinoObject.attributes().setUserString(g_userStrings[0][0], g_userStrings[0][1])
+
+      //iterate through userData and store all userdata to geometry
+      for ( let j = 0; j < g_userStrings.length; j++ ) {
+        rhinoObject.attributes().setUserString(g_userStrings[j][0], g_userStrings[j][1])
+      }
+
       
     }
   }
-
 
   // clear objects from scene
   scene.traverse((child) => {
@@ -102,21 +134,23 @@ async function compute() {
 
   const buffer = new Uint8Array(doc.toByteArray()).buffer;
   loader.parse(buffer, function (object) {
-
+    
     // go through all objects, check for userstrings and assing colors
-
     object.traverse((child) => {
-      if (child.isLine) {
+      if (child.isMesh) {
 
         if (child.userData.attributes.geometry.userStringCount > 0) {
+        console.log(child)
           
           //get color from userStrings
-          const colorData = child.userData.attributes.userStrings[0]
-          const col = colorData[1];
-          //convert color from userstring to THREE color and assign it
-          const threeColor = new THREE.Color("rgb(" + col + ")");
-          const mat = new THREE.LineBasicMaterial({ color: threeColor });
-          child.material = mat;
+          // const AreaData = child.userData.attributes.userStrings[0]
+          // const Area = AreaData[1];
+          // console.log(Area)
+
+          // //convert color from userstring to THREE color and assign it
+          // const threeColor = new THREE.Color("rgb(" + col + ")");
+          // const mat = new THREE.MeshBasicMaterial({ color: threeColor });
+          // child.material = mat;
         }
       }
     });
@@ -138,17 +172,20 @@ function onSliderChange() {
 // THREE BOILERPLATE //
 let scene, camera, renderer, controls;
 
+THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 )
+
 function init() {
   // create a scene and a camera
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(1, 1, 1);
-  camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  camera.position.z = -30;
+  scene = new THREE.Scene()
+  const near = 50
+  const far = 400
+  const color = 'lightblue'
+  scene.fog = new THREE.Fog(color,near,far)
+  scene.background = new THREE.Color( 'Skyblue' )
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
+  camera.position.y = - 150
+  camera.position.x =  150
+  camera.position.z =  50
 
   // create the renderer and add it to the html
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -159,12 +196,18 @@ function init() {
   controls = new OrbitControls(camera, renderer.domElement);
 
   // add a directional light
-  const directionalLight = new THREE.DirectionalLight(0xffffff);
-  directionalLight.intensity = 2;
-  scene.add(directionalLight);
+ 
+    const directionalLight = new THREE.DirectionalLight( 0xffffff )
+    directionalLight.position.set( 0, 0, 2 )
+    directionalLight.castShadow = true
+    directionalLight.intensity = 2
+    scene.add( directionalLight )
 
-  const ambientLight = new THREE.AmbientLight();
-  scene.add(ambientLight);
+    const directionalLight2 = new THREE.DirectionalLight( 0xffffff )
+    directionalLight2.position.set( 0, 0, -2 )
+    directionalLight2.castShadow = true
+    directionalLight2.intensity = 2
+    scene.add( directionalLight2 )
 
   animate();
 }
